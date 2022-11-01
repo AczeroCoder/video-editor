@@ -1,28 +1,3 @@
-
-var isDebug = false;
-try {
-    isDebug = new URLSearchParams(location.search).get('debug') === '1';
-} catch (err) {
-    console.warn(err);
-}
-
-// HANDLE COLOR SETTINGS
-let handleColor = "#1f84ff"
-// SAFARI AND MOBILE DETECT FOR CANVAS FILTERS ALTERNATIVE
-let shouldUseNativeCtxFilters = true;
-let onMobile = false;
-if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
-    shouldUseNativeCtxFilters = false;
-}
-function checkMobile() {
-    if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|ipad|iris|kindle|Android|Silk|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(navigator.userAgent) 
-    || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(navigator.userAgent.substr(0,4))) { 
-        onMobile = true;
-        shouldUseNativeCtxFilters = false;
-    }
-}
-checkMobile();
-
 function backgroundElem(elem) {
     let bg = document.getElementById('background');
     bg.appendChild(elem);
@@ -51,6 +26,7 @@ function getCookie(name) {
     }
     return decodeURI(dc.substring(begin + prefix.length, end));
 }
+
 // todo: add more types
 const ext_map = {
     'mp4': 'video/mp4',
@@ -155,16 +131,6 @@ function exportToJson() {
     popup(text);
 }
 
-function cloneCanvas(oldCanvas, drawImage = true) {
-    const canvas = document.createElement('canvas');
-    canvas.width = oldCanvas.width;
-    canvas.height = oldCanvas.height;
-    if (drawImage) {
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(oldCanvas, 0, 0);
-    }
-    return canvas;
-}
 
 class RenderedLayer {
     constructor(file) {
@@ -182,40 +148,6 @@ class RenderedLayer {
         this.canvas = document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d');
         backgroundElem(this.canvas);
-
-        this.cx = 0;
-        this.cy = 0;
-        this.rotation = 0;
-
-        /** @type {Record<string, (ctx: Transform | CanvasRenderingContext2D, handler?: { x: number, y: number }) => void>} */
-        this.transforms = {
-            toShape: (ctx) => {
-                ctx.translate(this.cx, this.cy);
-                ctx.rotate(this.rotation);
-                this.transforms.scale(ctx);
-                ctx.translate(-this.width / 2, -this.height / 2);
-            },
-            fromShape: (ctx) => {
-                ctx.translate(-this.cx, -this.cy);
-                ctx.rotate(-this.rotation);
-                this.transforms.inverseScale(ctx);
-                ctx.translate(this.width / 2, this.height / 2);
-            },
-            toHandler: (ctx, handler) => {
-                ctx.translate(handler.x, handler.y);
-                this.transforms.inverseScale(ctx);
-            },
-            fromHandler: (ctx, handler) => {
-                ctx.translate(-handler.x, -handler.y);
-                this.transforms.scale(ctx);
-            },
-            scale: (ctx) => {
-                ctx.scale(this.scaleX, this.scaleY);
-            },
-            inverseScale: (ctx) => {
-                ctx.scale(1 / this.scaleX, 1 / this.scaleY);
-            }
-        };
     }
 
     dump() {
@@ -236,9 +168,6 @@ class RenderedLayer {
         this.thumb_ctx.scale(dpr, dpr);
     }
 
-    /**
-     * @param {number} ref_time 
-     */
     show_preview(ref_time) {
         if (!this.ready) {
             return;
@@ -307,11 +236,6 @@ class RenderedLayer {
         return;
     }
 
-    /**
-     * @param {CanvasRenderingContext2D} ctx 
-     * @param {CanvasRenderingContext2D} ctx_out 
-     * @param {boolean} video 
-     */
     drawScaled(ctx, ctx_out, video = false) {
         const width = video ? ctx.videoWidth : ctx.canvas.clientWidth;
         const height = video ? ctx.videoHeight : ctx.canvas.clientHeight;
@@ -332,181 +256,6 @@ class RenderedLayer {
         ctx_out.drawImage((video ? ctx : ctx.canvas),
             0, 0, width, height,
             offset_width, offset_height, ratio * width, ratio * height);
-    }
-
-    /**
-     * @param {CanvasRenderingContext2D} ctx_out
-     * @param {number} ref_time
-     */
-    render(ctx_out, ref_time) {
-        console.warn('should implement render() method in inherited class');
-    }
-
-    /**
-     * @param {CanvasRenderingContext2D} ctx_out
-     * @param {number} ref_time
-     */
-    drawHandles(ctx_out, ref_time) {
-
-        let f = this.getFrame(ref_time);
-        if (f) {
-            // const ctx = cloneCanvas(this.ctx.canvas, false).getContext('2d');
-            const ctx = ctx_out;
-            let x = f[0] + this.canvas.width / 2;
-            let y = f[1] + this.canvas.height / 2;
-            ctx.fillStyle = this.color;
-            // ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(f[3] * (Math.PI / 180));
-
-            ctx.save();
-            ctx.fillStyle = '#fff';
-            ctx.strokeStyle = handleColor;
-            this.getHandlers().forEach(handler => {
-                ctx.save();
-                this.transforms.toHandler(ctx, handler);
-                if (handler.type === 'rotate') {
-                    ctx.beginPath();
-                    ctx.moveTo(0, -5);
-                    ctx.lineTo(0, -20);
-                    ctx.stroke();
-                }
-                ctx.beginPath();
-                if (onMobile) {
-                    ctx.arc(0, 0, 10, 0, 2 * Math.PI);
-                } else {
-                    ctx.arc(0, 0, 7, 0, 2 * Math.PI);
-                }
-                ctx.fill();
-                ctx.stroke();
-                ctx.restore();
-            });
-            ctx.restore();
-
-
-
-
-            ctx.restore();
-            // this.drawScaled(ctx, ctx_out);
-        }
-    }
-
-    getHandlers() {
-        return [
-            {
-                type: 'resize-top-left',
-                x: 0,
-                y: 0
-            },
-            {
-                type: 'resize-top-right',
-                x: this.width,
-                y: 0
-            },
-            {
-                type: 'resize-bottom-right',
-                x: this.width,
-                y: this.height
-            },
-            {
-                type: 'resize-bottom-left',
-                x: 0,
-                y: this.height
-            },
-            {
-                type: 'rotate',
-                x: this.width / 2,
-                y: this.height + 20 / this.scaleY
-            },
-        ];
-    }
-
-    getHandlers() {
-        return [
-            {
-                type: 'resize-top-left',
-                x: 0,
-                y: 0
-            },
-            {
-                type: 'resize-top-right',
-                x: this.width,
-                y: 0
-            },
-            {
-                type: 'resize-bottom-right',
-                x: this.width,
-                y: this.height
-            },
-            {
-                type: 'resize-bottom-left',
-                x: 0,
-                y: this.height
-            },
-            {
-                type: 'rotate',
-                x: this.width / 2,
-                y: this.height + 20 / this.scaleY
-            },
-        ];
-    }
-
-    getHandleAt(x, y) {
-        const ctx = new Transform(x, y);
-        this.transforms.fromShape(ctx);
-        let closestHandler = null, closestDist = Infinity;
-        for (const handler of this.getHandlers()) {
-            ctx.save();
-            const handlerCtx = new Transform(handler.x, handler.y);
-            this.transforms.fromHandler(handlerCtx, handler);
-            const [handlerX, handlerY] = [handlerCtx.x, handlerCtx.y];
-            this.transforms.fromHandler(ctx, handler);
-            const [x, y] = [ctx.x, ctx.y];
-            ctx.restore();
-            const dist = Math.hypot(x - handlerX, y - handlerY);
-            if (dist < closestDist) {
-                closestHandler = handler;
-                closestDist = dist;
-            }
-        }
-        return { handle: closestHandler, distance: closestDist };
-    }
-}
-
-class Transform {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.history = [];
-    }
-    translate(dx, dy) {
-        this.x += dx;
-        this.y += dy;
-    }
-    scale(sx, sy) {
-        this.x *= sx;
-        this.y *= sy;
-    }
-    rotate(rotation) {
-        const mag = Math.hypot(this.x, this.y);
-        const angle = Math.atan2(this.y, this.x) + rotation;
-        this.x = Math.cos(angle) * mag;
-        this.y = Math.sin(angle) * mag;
-    }
-    save() {
-        this.history.push({
-            x: this.x,
-            y: this.y,
-        });
-    }
-    restore() {
-        const {
-            x,
-            y
-        } = this.history.pop();
-        this.x = x;
-        this.y = y;
     }
 }
 
@@ -741,7 +490,7 @@ class ImageLayer extends MoveableLayer {
         super(file);
         // assume images are 10 seconds
         this.img = new Image();
-        this.type = "ImageLayer";
+
         this.reader = new FileReader();
         this.reader.addEventListener("load", (function () {
             this.img.src = this.reader.result;
@@ -754,11 +503,7 @@ class ImageLayer extends MoveableLayer {
         this.reader.readAsDataURL(file);
     }
 
-    /**
-     * @param {CanvasRenderingContext2D} ctx_out
-     * @param {number} ref_time
-     */
-     render(ctx_out, ref_time) {
+    render(ctx_out, ref_time) {
         if (!this.ready) {
             return;
         }
@@ -783,7 +528,6 @@ class TextLayer extends MoveableLayer {
         this.color = "#ffffff";
         this.shadow = true;
         this.ready = true;
-        this.type = "TextLayer";
     }
 
     init(player, preview) {
@@ -824,10 +568,6 @@ class TextLayer extends MoveableLayer {
         super.update(change, ref_time);
     }
 
-    /**
-     * @param {CanvasRenderingContext2D} ctx_out
-     * @param {number} ref_time
-     */
     render(ctx_out, ref_time) {
         let f = this.getFrame(ref_time);
         if (f) {
@@ -852,13 +592,6 @@ class TextLayer extends MoveableLayer {
             this.ctx.save();
             this.ctx.translate(x, y);
             this.ctx.rotate(f[3] * (Math.PI / 180));
-            
-            if (isDebug) {
-                this.ctx.save();
-                this.ctx.fillStyle = 'green';
-                this.ctx.fillRect(-this.width / 2, -this.height, this.width, this.height);
-                this.ctx.restore();
-            }
             this.ctx.textAlign = "center";
             this.ctx.fillText(this.name, 0, 0);
             this.ctx.restore();
@@ -871,7 +604,6 @@ class VideoLayer extends RenderedLayer {
     constructor(file) {
         super(file);
         this.frames = [];
-        this.type = "VideoLayer";
         // for creating empty VideoLayers (split() requires this)
         if (file._leave_empty) {
             return;
@@ -958,10 +690,6 @@ class VideoLayer extends RenderedLayer {
         this.update_name(name);
     }
 
-    /**
-     * @param {CanvasRenderingContext2D} ctx_out
-     * @param {number} ref_time
-     */
     render(ctx_out, ref_time) {
         if (!this.ready) {
             return;
@@ -1033,11 +761,7 @@ class AudioLayer extends RenderedLayer {
         this.description.textContent = "\"" + this.name + "\" [audio]";
     }
 
-    /**
-     * @param {CanvasRenderingContext2D} ctx_out
-     * @param {number} ref_time
-     */
-     render(ctx_out, ref_time) {
+    render(ctx_out, ref_time) {
         if (!this.ready) {
             return;
         }
@@ -1063,9 +787,7 @@ class Player {
     constructor() {
         this.playing = false;
         this.scrubbing = false;
-        /** @type {RenderedLayer[]} */
         this.layers = [];
-        /** @type {RenderedLayer | null} */
         this.selected_layer = null;
         this.onend_callback = null;
         this.update = null;
@@ -1362,6 +1084,12 @@ class Player {
     }
 
     setupDragHandler() {
+        let callback = (function (x, y) {
+            this.update = {
+                x: x,
+                y: y
+            };
+        }).bind(this);
         let elem = this.canvas_holder;
         let dragging = false;
         let base_x = 0;
@@ -1369,7 +1097,6 @@ class Player {
         let pointerup = function (e) {
             dragging = false;
             e.preventDefault();
-            deleter();
         }
         let get_ratio = (function (elem) {
             let c_ratio = elem.clientWidth / elem.clientHeight;
@@ -1383,8 +1110,7 @@ class Player {
             }
             return ratio;
         }).bind(this);
-        let getHandleMinDistance = () => 10;
-        let pointerdown = (e) => {
+        let pointerdown = function (e) {
             if (!this.selected_layer) {
                 return;
             }
@@ -1399,30 +1125,22 @@ class Player {
             dragging = true;
             base_x = e.offsetX * get_ratio(e.target) - f[0];
             base_y = e.offsetY * get_ratio(e.target) - f[1];
-            
-            const { handle, distance } = this.selected_layer.getHandleAt(base_x, base_y);
-            const selectedHandle = distance < getHandleMinDistance() ? handle : null;
-            console.log('selectedHandle', { selectedHandle, handle, distance, base_x, base_y, selected_layer: this.selected_layer });
-            this.selectedHandle = selectedHandle;
             window.addEventListener('pointerup', pointerup, {
                 once: true
             });
         }
-        let pointermove = (e) => {
+        let pointermove = function (e) {
             if (this.gesturing) { return; }
             e.preventDefault();
             e.stopPropagation();
             if (dragging) {
                 let dx = e.offsetX * get_ratio(e.target) - base_x;
                 let dy = e.offsetY * get_ratio(e.target) - base_y;
-                this.update = {
-                    x: dx,
-                    y: dy
-                };
+                callback(dx, dy);
             }
         }
-        elem.addEventListener('pointerdown', pointerdown);
-        elem.addEventListener('pointermove', pointermove, { passive: false });
+        elem.addEventListener('pointerdown', pointerdown.bind(this));
+        elem.addEventListener('pointermove', pointermove.bind(this), { passive: false });
         let deleter = function () {
             elem.removeEventListener('pointerdown', pointerdown);
             elem.removeEventListener('pointermove', pointermove);
@@ -1470,16 +1188,13 @@ class Player {
     deselect() {
         if (this.selected_layer !== null) {
             this.selected_layer.preview.classList.toggle('selected');
-            //openWorkshop("Content");
         }
     }
 
-    // APPLY PROPERTIES
     select(layer) {
         this.deselect();
         this.selected_layer = layer;
         this.selected_layer.preview.classList.toggle('selected');
-        openWorkshop("LoadProperties");
     }
 
     remove(layer) {
@@ -1589,11 +1304,6 @@ class Player {
         this.onend_callback = callback;
     }
 
-    /**
-     * @param {CanvasRenderingContext2D} ctx 
-     * @param {number} time 
-     * @param {boolean} update_preview 
-     */    
     render(ctx, time, update_preview) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         for (let layer of this.layers) {
@@ -1604,7 +1314,6 @@ class Player {
                 continue;
             }
             layer.render(ctx, time);
-            layer.drawHandles(ctx, time);
             if (update_preview) {
                 layer.show_preview(time);
             }
@@ -1836,7 +1545,6 @@ window.addEventListener('load', function () {
 });
 
 window.onbeforeunload = function () {
-    if (isDebug) return;
     return true;
 }
 
@@ -2009,120 +1717,5 @@ function download(ev) {
         e.classList.remove('exporting');
         player.pause();
         player.time = 0;
-    });
-}
-
-const rightContainerContent = document.getElementById("rightContainerContent");
-const rightContainerProperties = document.getElementById("rightContainerProperties");
-function closeWorkshop() {
-    rightContainerContent.style.display = "none";
-    rightContainerProperties.style.display = "none";
-    rightContainerContent.style.position = "absolute";
-    rightContainerProperties.style.position = "absolute";
-}
-function openWorkshop(action) {
-    const Btns_Templates = document.getElementById("Btns_Templates");
-    const Btns_Appearance = document.getElementById("Btns_Appearance");
-    const Btns_Workshop = document.getElementById("Btns_Workshop");
-    const selectColor = "var(--color-dark-90)";
-    const defaultColor = "var(--color-dark-50)";
-
-    // ImageDataContainer.style.display = "none";
-    // TextDataContainer.style.display = "none";
-    //TextAnimationContainer.style.display = "none";
-    const ImageContainer = document.getElementById("PropertiesImage");
-    const TextContainer = document.getElementById("PropertiesText");
-    if (player.selected_layer != null) {
-        if (player.selected_layer.type == "ImageLayer") {
-            ImageContainer.style.display = "block";
-        } else if (player.selected_layer.type == "TextLayer") {
-            console.log("hia")
-            TextContainer.style.display = "block";
-        }
-    } else {
-        TextContainer.style.display = "none";
-        ImageContainer.style.display = "none";
-    }
-    
-    if (action == "LoadProperties") {
-        // Btns_Templates.style.backgroundColor = defaultColor;
-        // Btns_Appearance.style.backgroundColor = selectColor;
-        // Btns_Workshop.style.backgroundColor = defaultColor;
-        // closeWorkshop();
-        // rightContainerProperties.style.display = "block";
-        // rightContainerProperties.style.position = "relative";
-    } else if (action == "Content") {
-        Btns_Templates.style.backgroundColor = defaultColor;
-        Btns_Appearance.style.backgroundColor = defaultColor;
-        Btns_Workshop.style.backgroundColor = selectColor;
-        closeWorkshop();
-        rightContainerContent.style.display = "block";
-        rightContainerContent.style.position = "relative";
-    } else if (action == "Properties") {
-        Btns_Templates.style.backgroundColor = defaultColor;
-        Btns_Appearance.style.backgroundColor = selectColor;
-        Btns_Workshop.style.backgroundColor = defaultColor;
-        closeWorkshop();
-        rightContainerProperties.style.display = "block";
-        rightContainerProperties.style.position = "relative";
-    }
-}
-// function editApperance(openProperties = false) {
-//     const MainContainer = document.getElementById("PropertiesNoSelection");
-//     const TextContainer = document.getElementById("PropertiesText");
-//     const ImageContainer = document.getElementById("PropertiesImage");
-//     const VideoContainer = document.getElementById("PropertiesVideo");
-//     const containersSet = new Set([MainContainer, TextContainer, ImageContainer, VideoContainer]);
-//     if (!mouse.selectedObject) {
-//         MainContainer.style.display = "block";
-//         // openWorkshop("Content");
-//         togButton(false);
-//         containersSet.delete(MainContainer);
-//         for (const container of containersSet) {
-//             container.style.display = "none";
-//         }
-//         lazyDraw();
-//     } else {
-//         const pickedContainer = {
-//             TextLayer: TextContainer,
-//             ImageLayer: ImageContainer,
-//             VideoLayer: VideoContainer,
-//         }[player.selectedObject.type];
-//         containersSet.delete(pickedContainer);
-//         for (const container of containersSet) {
-//             container.style.display = "none";
-//         }
-//         pickedContainer.style.display = "block";
-//         if (player.selectedObject.type == "image") {
-//             resetImageData();
-//             IMAGE_EFFECTS();
-//         }
-//         if (player.selectedObject.type == "text") {
-//             resetTextData();
-//         }
-//         togButton(true);
-//         if (openProperties) {
-//             openWorkshop("Properties");
-//         }
-//         updateApperance();
-//     }
-// }
-
-$("#PropertiesBtn").click(function (e) {
-    e.preventDefault();
-    openWorkshop("Properties");
-});
-$("#ContentBtn").click(function (e) {
-    e.preventDefault();
-    openWorkshop("Content");
-});
-openWorkshop("Content");
-
-
-// DEBUG
-if (isDebug) {
-    fetch('https://i.suar.me/WOKrQ').then(res => res.blob()).then(file => {
-        player.addFile(file);
-        player.add(new TextLayer('Test text'));
     });
 }
